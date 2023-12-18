@@ -24,28 +24,64 @@ import ConsentimientoExpreso
             self.fResult = flutterResult
             
             if flutterMethodCall.method == "startNewActivity" {
-                UIView.animate(withDuration: 0.5, animations: {
-                    self.window?.rootViewController = nil
-                    self.uuidTrx = UUID().uuidString
-                    self.uuidClient = UUID().uuidString
-                    self.viewToPush.uuidTrx = self.uuidTrx
-                    self.viewToPush.uuidClient = self.uuidClient
+                if let arguments = flutterMethodCall.arguments as? [String: Any],
+                  let selectedEnvironmentString = arguments["selectedEnvironment"] as? String,
+                   
+                   let APIKey = arguments["APIKey"] as? String,
+                   let url = arguments["url"] as? String{
                     
-                    self.viewToPush.idLender = "CNVFKn77DYyZS5Du6LebjNA8IQNs2DHY"
-                    self.viewToPush.delegate = self
-                    self.viewToPush.environment = .prod
-                    self.viewToPush.isWebViewLaunched = true
-                    self.viewToPush.url = "https://app.proddicio.net/"
+                    print("Selected Environment: \(selectedEnvironmentString)")
+                    print("API Key: \(APIKey)")
+                    print("URL: \(url)")
                     
-                    let navigationController = UINavigationController(rootViewController: flutterViewController)
                     
-                    self.window = UIWindow(frame: UIScreen.main.bounds)
-                    self.window?.makeKeyAndVisible()
-                    self.window.rootViewController = navigationController
-                    navigationController.isNavigationBarHidden = true
-                    navigationController.pushViewController(self.viewToPush, animated: true)
+                    UIView.animate(withDuration: 0.5, animations: {
+                        self.window?.rootViewController = nil
+                        self.uuidTrx = UUID().uuidString
+                        self.uuidClient = UUID().uuidString
+                        self.viewToPush.uuidTrx = self.uuidTrx
+                        self.viewToPush.uuidClient = self.uuidClient
+                        
+//                        self.viewToPush.idLender = "CNVFKn77DYyZS5Du6LebjNA8IQNs2DHY"
+                        self.viewToPush.idLender = APIKey
+                        self.viewToPush.delegate = self
+                        
+                        
+//                        self.viewToPush.url = "https://app.proddicio.net/"
+                        self.viewToPush.url = url
+                        
+                        
+                        switch selectedEnvironmentString {
+                        case "Enviroment.Prod":
+                            self.viewToPush.environment = .prod
+                            break
+                        case "Enviroment.QA":
+                            self.viewToPush.environment = .qa
+                            break
+                        case "Enviroment.Dev":
+                            self.viewToPush.environment = .dev
+                            break
+                        default:
+                            break
+                        }
+                        
+                        self.viewToPush.isWebViewLaunched = true
+                        
+                        
+                        let navigationController = UINavigationController(rootViewController: flutterViewController)
+                        self.window = UIWindow(frame: UIScreen.main.bounds)
+                        self.window?.makeKeyAndVisible()
+                        self.window.rootViewController = navigationController
+                        navigationController.isNavigationBarHidden = true
+                        
+                        navigationController.pushViewController(self.viewToPush, animated: true)
+                        
+                    })
                     
-                })
+                }
+                
+                
+
             }
             if flutterMethodCall.method == "getInfoDocs" {
                 if self.uuidTrx == "" || self.uuidClient == "" {

@@ -1,22 +1,29 @@
-import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:io' as IO;
 import 'package:android_intent/android_intent.dart';
+import 'package:flutter/cupertino.dart';
+
 
 void main() => runApp(new MyApp());
+
+enum Enviroment {Dev, QA, Demo, Prod}
+
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return new MaterialApp(
-        title: 'Flutter Demo SDK',
-        home: new Scaffold(
-            appBar: new AppBar(
-              title: new Text('PivoteSDK Flutter'),
+    return MaterialApp(
+        title: 'PivoteSDK Flutter',
+        home: Scaffold(
+            appBar: AppBar(
+              title: Text('PivoteSDK Flutter'),
             ),
-            body: FlutterPage()));
+            body: FlutterPage()
+        )
+    );
   }
 }
 
@@ -29,6 +36,12 @@ class FlutterComponent extends State<FlutterPage> {
   static const String _channel = 'test_activity';
   static const platform = const MethodChannel(_channel);
   String _dataFromFlutter = "Valores";
+  Enviroment selectedEnvironment = Enviroment.Prod;
+  String _APIKey = "CNVFKn77DYyZS5Du6LebjNA8IQNs2DHY";
+  String _url = "https://app.proddicio.net/";
+  TextEditingController apiKey = TextEditingController(text: "CNVFKn77DYyZS5Du6LebjNA8IQNs2DHY");
+  TextEditingController urlEnviroment = TextEditingController(text: "https://app.proddicio.net/");
+
 
   @override
   void initState() {
@@ -65,24 +78,104 @@ class FlutterComponent extends State<FlutterPage> {
     });
   }
 
+
+
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
         itemCount: 1,
         itemBuilder: (context, rowNumber) {
-          return new Container(
+          return Container(
             padding: EdgeInsets.all(16.0),
-            child: new Column(
+            child: Column(
               children: <Widget>[
-                new Text(
-                  'Flutter Component',
+                Text(
+                  'Selecciona un ambiente',
                   style: TextStyle(fontSize: 20.0, color: Colors.blue),
-                  textAlign: TextAlign.center,
+                  textAlign: TextAlign.center
                 ),
-                new SizedBox(
-                  height: 16.0,
+
+                CupertinoNavigationBar(
+
+                    middle: CupertinoSlidingSegmentedControl<Enviroment>(
+                      backgroundColor: CupertinoColors.systemGrey2,
+                      thumbColor: CupertinoColors.activeBlue,
+
+                      groupValue: selectedEnvironment,
+                      onValueChanged: (Enviroment? value) {
+
+                        if(value != null){
+                          setState(() {
+                            selectedEnvironment = value;
+
+                          });
+                        }
+
+                      },
+                      children: const <Enviroment, Widget>{
+                        Enviroment.Demo: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          child: Text(
+                            'Demo',
+                            style: TextStyle(color: CupertinoColors.white),
+                          ),
+                        ),
+                        Enviroment.Dev: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 20),
+                          child: Text(
+                            'Dev',
+                            style: TextStyle(color: CupertinoColors.white),
+                          ),
+                        ),
+                        Enviroment.Prod: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 20),
+                          child: Text(
+                            'Prod',
+                            style: TextStyle(color: CupertinoColors.white),
+                          ),
+                        ),
+                        Enviroment.QA: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 20),
+                          child: Text(
+                            'QA',
+                            style: TextStyle(color: CupertinoColors.white),
+                          ),
+                        ),
+                      },
+                    )
                 ),
-                new MaterialButton(
+
+                TextField(
+
+                  onChanged: (apikey){
+                    _APIKey = apikey;
+
+
+                  },
+                    controller: apiKey,
+                  decoration: InputDecoration(
+                      border: UnderlineInputBorder(),
+                      labelText: 'Agrega el APIKey',
+                    hintText: 'CNVFKn77DYyZS5Du6LebjNA8IQNs2DHY',
+                  )
+                ),
+
+                TextField(
+                  onChanged: (urldicio){
+                    _url = urldicio;
+                  },
+                    controller: urlEnviroment,
+                    decoration: InputDecoration(
+                        border: UnderlineInputBorder(),
+                        labelText: 'Agrega el URL',
+                        hintText: 'https://app.proddicio.net/',
+
+                    )
+                ),
+                Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16)
+                ),
+                MaterialButton(
                     child: const Text('Open WebView'),
                     elevation: 5.0,
                     height: 48.0,
@@ -93,10 +186,10 @@ class FlutterComponent extends State<FlutterPage> {
                       print("button pressed");
                       _getNewActivity();
                     }),
-                new SizedBox(
+                SizedBox(
                   height: 16.0,
                 ),
-                new MaterialButton(
+                MaterialButton(
                     child: const Text('Get Documents'),
                     elevation: 5.0,
                     height: 48.0,
@@ -111,10 +204,10 @@ class FlutterComponent extends State<FlutterPage> {
                         _getDocsFromiOS();
                       }
                     }),
-                new SizedBox(
+                SizedBox(
                   height: 16.0,
                 ),
-                new MaterialButton(
+                MaterialButton(
                     child: const Text('Get Data'),
                     elevation: 5.0,
                     height: 48.0,
@@ -129,23 +222,34 @@ class FlutterComponent extends State<FlutterPage> {
                         _getDataFromiOS();
                       }
                     }),
+                Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16)
+                ),
                 Text(
                   _dataFromFlutter,
-                ),
+                )
               ],
             ),
+
+
           );
+
         });
   }
-
   _getNewActivity() async {
     String data;
     try {
-      final String result = await platform.invokeMethod('startNewActivity');
+      final String result = await platform.invokeMethod('startNewActivity',{
+        'selectedEnvironment': selectedEnvironment.toString(),
+        'APIKey': _APIKey,
+        'url': _url,
+      });
       data = result;
+
     } on PlatformException catch (e) {
       data = "Android is not responding please check the code";
     }
+
     print(data);
     setState(() {
       _dataFromFlutter = data;
